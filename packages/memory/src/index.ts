@@ -25,5 +25,9 @@ export {
   type IBeliefsStore,
   type StoredCallerProfile,
 } from "./networks/beliefs-store.js";
+export { PgFactsStore } from "./networks/pg-facts-store.js";
+export { PgEpisodesStore } from "./networks/pg-episodes-store.js";
+export { PgSummariesStore } from "./networks/pg-summaries-store.js";
+export { PgBeliefsStore } from "./networks/pg-beliefs-store.js";
 export * from "./db/schema.js";
 export { createDb, type Database } from "./db/connection.js";

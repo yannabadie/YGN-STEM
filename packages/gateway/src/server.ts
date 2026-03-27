@@ -7,22 +7,45 @@ import {
   InMemoryEpisodesStore,
   InMemorySummariesStore,
   InMemoryBeliefsStore,
+  PgFactsStore,
+  PgEpisodesStore,
+  PgSummariesStore,
+  PgBeliefsStore,
+  createDb,
 } from "@ygn-stem/memory";
 import { CallerProfiler, ArchitectureSelector, SkillsEngine } from "@ygn-stem/adaptive";
 
 async function main() {
   const port = parseInt(process.env.PORT ?? "3000", 10);
 
-  // Initialize memory (in-memory for now, PostgreSQL later)
-  const memory = new HindsightMemory({
-    facts: new InMemoryFactsStore(),
-    episodes: new InMemoryEpisodesStore(),
-    summaries: new InMemorySummariesStore(),
-    beliefs: new InMemoryBeliefsStore(),
-  });
+  // If DATABASE_URL is set, use PostgreSQL stores
+  // Otherwise fall back to in-memory stores
+  const usePostgres = !!process.env.DATABASE_URL;
+  let memory: HindsightMemory;
+  let beliefsStore: InMemoryBeliefsStore | PgBeliefsStore;
+
+  if (usePostgres) {
+    console.log("[STEM] Using PostgreSQL stores");
+    const db = createDb(process.env.DATABASE_URL!);
+    beliefsStore = new PgBeliefsStore(db);
+    memory = new HindsightMemory({
+      facts: new PgFactsStore(db),
+      episodes: new PgEpisodesStore(db),
+      summaries: new PgSummariesStore(db),
+      beliefs: beliefsStore,
+    });
+  } else {
+    console.log("[STEM] Using in-memory stores (no DATABASE_URL)");
+    beliefsStore = new InMemoryBeliefsStore();
+    memory = new HindsightMemory({
+      facts: new InMemoryFactsStore(),
+      episodes: new InMemoryEpisodesStore(),
+      summaries: new InMemorySummariesStore(),
+      beliefs: beliefsStore,
+    });
+  }
 
   // Initialize adaptive intelligence
-  const beliefsStore = new InMemoryBeliefsStore();
   const profiler = new CallerProfiler(beliefsStore);
   const selector = new ArchitectureSelector();
   const skills = new SkillsEngine();
@@ -50,6 +73,16 @@ async function main() {
     }
   }
 
+  // Auth configuration (JWT + API Key)
+  const auth = {
+    jwtSecret: process.env.JWT_SECRET || undefined,
+    apiKeys: process.env.API_KEYS
+      ? new Set(process.env.API_KEYS.split(","))
+      : undefined,
+    apiKeyHeader: process.env.API_KEY_HEADER || "X-API-Key",
+    publicPaths: ["/health", "/.well-known/agent.json"],
+  };
+
   // Create and start gateway
   const app = createGateway({
     registry,
@@ -57,6 +90,7 @@ async function main() {
     profiler,
     selector,
     skills,
+    auth,
   });
 
   app.listen(port, () => {
