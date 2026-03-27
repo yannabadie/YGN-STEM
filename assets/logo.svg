@@ -1,0 +1,216 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <defs>
+    <!-- Dark background gradient -->
+    <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0f1f35"/>
+      <stop offset="100%" stop-color="#080e1a"/>
+    </radialGradient>
+
+    <!-- Node glow effects -->
+    <radialGradient id="nodeGlowBlue" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#1e3a5f" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="nodeGlowGreen" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="nodeGlowPurple" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#a78bfa" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Central orb gradient -->
+    <radialGradient id="centerOrb" cx="40%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#4aaeff"/>
+      <stop offset="45%" stop-color="#1e3a5f"/>
+      <stop offset="100%" stop-color="#0c1e33"/>
+    </radialGradient>
+
+    <!-- Edge glow filter -->
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="softGlow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="textGlow" x="-20%" y="-40%" width="140%" height="180%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Clip path for rounded square icon area -->
+    <clipPath id="iconClip">
+      <rect x="40" y="30" width="320" height="250" rx="20"/>
+    </clipPath>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="400" fill="url(#bgGrad)" rx="18"/>
+
+  <!-- Subtle grid lines (background texture) -->
+  <g opacity="0.07" stroke="#4a90d9" stroke-width="0.5">
+    <line x1="0" y1="50" x2="400" y2="50"/>
+    <line x1="0" y1="100" x2="400" y2="100"/>
+    <line x1="0" y1="150" x2="400" y2="150"/>
+    <line x1="0" y1="200" x2="400" y2="200"/>
+    <line x1="0" y1="250" x2="400" y2="250"/>
+    <line x1="50" y1="0" x2="50" y2="300"/>
+    <line x1="100" y1="0" x2="100" y2="300"/>
+    <line x1="150" y1="0" x2="150" y2="300"/>
+    <line x1="200" y1="0" x2="200" y2="300"/>
+    <line x1="250" y1="0" x2="250" y2="300"/>
+    <line x1="300" y1="0" x2="300" y2="300"/>
+    <line x1="350" y1="0" x2="350" y2="300"/>
+  </g>
+
+  <!-- ===== NETWORK FABRIC / MESH ICON ===== -->
+  <!-- Node positions:
+    Center:       (200, 148)
+    Top:          (200, 65)
+    Top-Left:     (118, 100)
+    Top-Right:    (282, 100)
+    Left:         (75,  175)
+    Right:        (325, 175)
+    Bottom-Left:  (118, 220)
+    Bottom-Right: (282, 220)
+    Bottom:       (200, 248)
+  -->
+
+  <!-- Connection lines (edges) — drawn before nodes so nodes sit on top -->
+  <!-- Blue-tinted connections -->
+  <g stroke="#1e3a5f" stroke-width="1.5" opacity="0.5" fill="none">
+    <!-- Outer polygon ring -->
+    <line x1="200" y1="65"  x2="282" y2="100"/>
+    <line x1="282" y1="100" x2="325" y2="175"/>
+    <line x1="325" y1="175" x2="282" y2="220"/>
+    <line x1="282" y1="220" x2="200" y2="248"/>
+    <line x1="200" y1="248" x2="118" y2="220"/>
+    <line x1="118" y1="220" x2="75"  y2="175"/>
+    <line x1="75"  y1="175" x2="118" y2="100"/>
+    <line x1="118" y1="100" x2="200" y2="65"/>
+  </g>
+
+  <!-- Glowing active connections -->
+  <g fill="none" filter="url(#glow)">
+    <!-- Center to all outer nodes -->
+    <line x1="200" y1="148" x2="200" y2="65"  stroke="#10b981" stroke-width="1.2" opacity="0.7"/>
+    <line x1="200" y1="148" x2="282" y2="100" stroke="#3b82f6" stroke-width="1.2" opacity="0.7"/>
+    <line x1="200" y1="148" x2="325" y2="175" stroke="#a78bfa" stroke-width="1.2" opacity="0.6"/>
+    <line x1="200" y1="148" x2="282" y2="220" stroke="#3b82f6" stroke-width="1.2" opacity="0.6"/>
+    <line x1="200" y1="148" x2="200" y2="248" stroke="#10b981" stroke-width="1.2" opacity="0.7"/>
+    <line x1="200" y1="148" x2="118" y2="220" stroke="#a78bfa" stroke-width="1.2" opacity="0.6"/>
+    <line x1="200" y1="148" x2="75"  y2="175" stroke="#3b82f6" stroke-width="1.2" opacity="0.7"/>
+    <line x1="200" y1="148" x2="118" y2="100" stroke="#10b981" stroke-width="1.2" opacity="0.7"/>
+    <!-- Cross connections -->
+    <line x1="118" y1="100" x2="282" y2="100" stroke="#1e3a5f" stroke-width="1"   opacity="0.8"/>
+    <line x1="75"  y1="175" x2="325" y2="175" stroke="#1e3a5f" stroke-width="1"   opacity="0.6"/>
+    <line x1="118" y1="220" x2="282" y2="220" stroke="#1e3a5f" stroke-width="1"   opacity="0.6"/>
+    <line x1="118" y1="100" x2="75"  y2="175" stroke="#a78bfa" stroke-width="1"   opacity="0.5"/>
+    <line x1="282" y1="100" x2="325" y2="175" stroke="#10b981" stroke-width="1"   opacity="0.5"/>
+    <line x1="200" y1="65"  x2="118" y2="100" stroke="#a78bfa" stroke-width="1"   opacity="0.5"/>
+    <line x1="200" y1="65"  x2="282" y2="100" stroke="#10b981" stroke-width="1"   opacity="0.5"/>
+  </g>
+
+  <!-- Node glow halos -->
+  <!-- Center node halo -->
+  <circle cx="200" cy="148" r="32" fill="url(#nodeGlowBlue)" opacity="0.8"/>
+  <!-- Outer node halos -->
+  <circle cx="200" cy="65"  r="20" fill="url(#nodeGlowGreen)"  opacity="0.7"/>
+  <circle cx="282" cy="100" r="18" fill="url(#nodeGlowBlue)"   opacity="0.6"/>
+  <circle cx="325" cy="175" r="18" fill="url(#nodeGlowPurple)" opacity="0.6"/>
+  <circle cx="282" cy="220" r="18" fill="url(#nodeGlowBlue)"   opacity="0.6"/>
+  <circle cx="200" cy="248" r="18" fill="url(#nodeGlowGreen)"  opacity="0.6"/>
+  <circle cx="118" cy="220" r="18" fill="url(#nodeGlowPurple)" opacity="0.6"/>
+  <circle cx="75"  cy="175" r="18" fill="url(#nodeGlowBlue)"   opacity="0.6"/>
+  <circle cx="118" cy="100" r="18" fill="url(#nodeGlowGreen)"  opacity="0.6"/>
+
+  <!-- Outer nodes — small hexagons via circle with stroke -->
+  <g filter="url(#softGlow)">
+    <!-- Top node — green primary -->
+    <circle cx="200" cy="65" r="9" fill="#0a2240" stroke="#10b981" stroke-width="2"/>
+    <circle cx="200" cy="65" r="4" fill="#10b981"/>
+    <!-- Top-right node — blue -->
+    <circle cx="282" cy="100" r="8" fill="#0a2240" stroke="#3b82f6" stroke-width="1.8"/>
+    <circle cx="282" cy="100" r="3.5" fill="#3b82f6"/>
+    <!-- Right node — purple -->
+    <circle cx="325" cy="175" r="8" fill="#0a2240" stroke="#a78bfa" stroke-width="1.8"/>
+    <circle cx="325" cy="175" r="3.5" fill="#a78bfa"/>
+    <!-- Bottom-right node — blue -->
+    <circle cx="282" cy="220" r="8" fill="#0a2240" stroke="#3b82f6" stroke-width="1.8"/>
+    <circle cx="282" cy="220" r="3.5" fill="#3b82f6"/>
+    <!-- Bottom node — green -->
+    <circle cx="200" cy="248" r="9" fill="#0a2240" stroke="#10b981" stroke-width="2"/>
+    <circle cx="200" cy="248" r="4" fill="#10b981"/>
+    <!-- Bottom-left node — purple -->
+    <circle cx="118" cy="220" r="8" fill="#0a2240" stroke="#a78bfa" stroke-width="1.8"/>
+    <circle cx="118" cy="220" r="3.5" fill="#a78bfa"/>
+    <!-- Left node — blue -->
+    <circle cx="75" cy="175" r="8" fill="#0a2240" stroke="#3b82f6" stroke-width="1.8"/>
+    <circle cx="75" cy="175" r="3.5" fill="#3b82f6"/>
+    <!-- Top-left node — green -->
+    <circle cx="118" cy="100" r="8" fill="#0a2240" stroke="#10b981" stroke-width="1.8"/>
+    <circle cx="118" cy="100" r="3.5" fill="#10b981"/>
+  </g>
+
+  <!-- Central hub node — larger, prominent -->
+  <g filter="url(#softGlow)">
+    <circle cx="200" cy="148" r="22" fill="#0a2240" stroke="#3b82f6" stroke-width="2.5"/>
+    <circle cx="200" cy="148" r="16" fill="url(#centerOrb)"/>
+    <!-- Inner ring detail -->
+    <circle cx="200" cy="148" r="10" fill="none" stroke="#4aaeff" stroke-width="1" opacity="0.6"/>
+    <!-- Center dot -->
+    <circle cx="200" cy="148" r="4" fill="#7dd3fc"/>
+  </g>
+
+  <!-- ===== TEXT ===== -->
+  <!-- "YGN" — large, bold, primary -->
+  <text
+    x="200" y="318"
+    font-family="'Segoe UI', 'Inter', 'Helvetica Neue', Arial, sans-serif"
+    font-size="72"
+    font-weight="800"
+    letter-spacing="-1"
+    text-anchor="middle"
+    fill="#e8f4ff"
+    filter="url(#textGlow)"
+  >YGN</text>
+
+  <!-- "STEM" — smaller, colored accent -->
+  <text
+    x="200" y="356"
+    font-family="'Segoe UI', 'Inter', 'Helvetica Neue', Arial, sans-serif"
+    font-size="22"
+    font-weight="600"
+    letter-spacing="8"
+    text-anchor="middle"
+    fill="#10b981"
+  >STEM</text>
+
+  <!-- Subtle tagline separator line -->
+  <line x1="120" y1="328" x2="280" y2="328" stroke="#1e3a5f" stroke-width="1" opacity="0.8"/>
+
+  <!-- Adaptive Agent Fabric — micro tagline -->
+  <text
+    x="200" y="386"
+    font-family="'Segoe UI', 'Inter', 'Helvetica Neue', Arial, sans-serif"
+    font-size="11"
+    font-weight="400"
+    letter-spacing="2"
+    text-anchor="middle"
+    fill="#4a6fa5"
+    opacity="0.9"
+  >ADAPTIVE AGENT FABRIC</text>
+
+</svg>
