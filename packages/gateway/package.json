@@ -1,0 +1,20 @@
+{
+  "name": "@ygn-stem/gateway",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": { "typecheck": "tsc --noEmit", "test": "vitest run", "dev": "tsx watch src/server.ts" },
+  "dependencies": {
+    "@ygn-stem/shared": "workspace:*",
+    "@ygn-stem/connectors": "workspace:*",
+    "@ygn-stem/memory": "workspace:*",
+    "@ygn-stem/adaptive": "workspace:*",
+    "express": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "supertest": "^7.0.0",
+    "@types/supertest": "^6.0.0",
+    "tsx": "^4.0.0"
+  }
+}
