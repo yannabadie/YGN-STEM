@@ -3,36 +3,8 @@
 // 3-phase payment lifecycle: Intent → Mandate → Receipt.
 // ---------------------------------------------------------------------------
 
-export interface PaymentIntent {
-  id: string;
-  amount: number;
-  currency: string;
-  description: string;
-  autoApproveThreshold?: number;
-  status: "pending" | "approved" | "rejected";
-  createdAt: string;
-}
-
-export interface PaymentMandate {
-  id: string;
-  intentId: string;
-  amount: number;
-  currency: string;
-  status: "pending" | "executed" | "failed";
-  approvedBy?: string;
-  createdAt: string;
-  executedAt?: string;
-}
-
-export interface PaymentReceipt {
-  id: string;
-  mandateId: string;
-  amount: number;
-  currency: string;
-  status: "confirmed";
-  transactionRef: string;
-  createdAt: string;
-}
+import type { PaymentIntent, PaymentMandate, PaymentReceipt } from "@ygn-stem/shared";
+export type { PaymentIntent, PaymentMandate, PaymentReceipt };
 
 export interface AuditEntry {
   action: string;

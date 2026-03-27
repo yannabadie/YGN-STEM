@@ -3,22 +3,8 @@
 // Manages checkout session lifecycles with idempotency.
 // ---------------------------------------------------------------------------
 
-export interface UcpItem {
-  name: string;
-  quantity: number;
-  unitPrice: number;
-}
-
-export interface UcpSession {
-  id: string;
-  status: "created" | "completed" | "expired";
-  items: UcpItem[];
-  total: number;
-  currency: string;
-  createdAt: string;
-  completedAt?: string;
-  idempotencyKey: string;
-}
+import type { UcpItem, UcpSession } from "@ygn-stem/shared";
+export type { UcpItem, UcpSession };
 
 // ---------------------------------------------------------------------------
 // Helpers

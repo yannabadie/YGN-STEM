@@ -13,7 +13,8 @@
     "@ygn-stem/shared": "workspace:*",
     "drizzle-orm": "latest",
     "postgres": "^3.4.0",
-    "ioredis": "^5.4.0"
+    "ioredis": "^5.4.0",
+    "_ioredis_note": "ioredis is not yet imported — reserved for Redis caching layer (planned)"
   },
   "devDependencies": {
     "drizzle-kit": "latest"

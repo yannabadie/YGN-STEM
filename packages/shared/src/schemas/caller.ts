@@ -8,10 +8,12 @@ export const TaskPropertySchema = z.object({
 export type TaskProperty = z.infer<typeof TaskPropertySchema>;
 
 export const ArchitectureChoiceSchema = z.enum([
-  "simple",
-  "orchestrator",
-  "parallelized",
-  "specialized",
+  "smt-pipeline",
+  "adversarial-redblue",
+  "knowledge-pipeline",
+  "centralized-multi-agent",
+  "direct-llm",
+  "single-agent",
 ]);
 export type ArchitectureChoice = z.infer<typeof ArchitectureChoiceSchema>;
 

@@ -58,6 +58,15 @@ import {
   OrganRoutingSchema,
 } from "../schemas/caller.js";
 
+// ---- Commerce schemas ----
+import {
+  UcpItemSchema,
+  UcpSessionSchema,
+  PaymentIntentSchema,
+  PaymentMandateSchema,
+  PaymentReceiptSchema,
+} from "../schemas/commerce.js";
+
 // ---- Errors ----
 import {
   StemError,
@@ -611,7 +620,14 @@ describe("TaskPropertySchema", () => {
 });
 
 describe("ArchitectureChoiceSchema", () => {
-  const validValues = ["simple", "orchestrator", "parallelized", "specialized"];
+  const validValues = [
+    "smt-pipeline",
+    "adversarial-redblue",
+    "knowledge-pipeline",
+    "centralized-multi-agent",
+    "direct-llm",
+    "single-agent",
+  ];
 
   it.each(validValues)("accepts '%s'", (value) => {
     expect(ArchitectureChoiceSchema.parse(value)).toBe(value);
@@ -630,6 +646,123 @@ describe("OrganRoutingSchema", () => {
       fallback: false,
     };
     expect(OrganRoutingSchema.parse(routing)).toMatchObject(routing);
+  });
+});
+
+// ===========================================================================
+// Commerce schemas
+// ===========================================================================
+
+describe("UcpItemSchema", () => {
+  it("accepts a valid item", () => {
+    const item = { name: "Textbook", quantity: 2, unitPrice: 25 };
+    expect(UcpItemSchema.parse(item)).toMatchObject(item);
+  });
+
+  it("rejects zero quantity", () => {
+    expect(() => UcpItemSchema.parse({ name: "X", quantity: 0, unitPrice: 10 })).toThrow();
+  });
+
+  it("rejects negative unitPrice", () => {
+    expect(() => UcpItemSchema.parse({ name: "X", quantity: 1, unitPrice: -1 })).toThrow();
+  });
+});
+
+describe("UcpSessionSchema", () => {
+  const validSession = {
+    id: "session-001",
+    status: "created" as const,
+    items: [{ name: "Book", quantity: 1, unitPrice: 20 }],
+    total: 20,
+    currency: "USD",
+    createdAt: "2026-01-01T00:00:00.000Z",
+    idempotencyKey: "key-abc",
+  };
+
+  it("accepts a valid session", () => {
+    expect(UcpSessionSchema.parse(validSession)).toMatchObject({ id: "session-001" });
+  });
+
+  it("accepts optional completedAt", () => {
+    const withCompleted = { ...validSession, status: "completed" as const, completedAt: "2026-01-01T01:00:00.000Z" };
+    expect(UcpSessionSchema.parse(withCompleted)).toMatchObject({ status: "completed" });
+  });
+
+  it("rejects invalid status", () => {
+    expect(() => UcpSessionSchema.parse({ ...validSession, status: "pending" })).toThrow();
+  });
+});
+
+describe("PaymentIntentSchema", () => {
+  const validIntent = {
+    id: "intent-001",
+    amount: 100,
+    currency: "USD",
+    description: "Course enrollment",
+    status: "pending" as const,
+    createdAt: "2026-01-01T00:00:00.000Z",
+  };
+
+  it("accepts a valid intent", () => {
+    expect(PaymentIntentSchema.parse(validIntent)).toMatchObject({ id: "intent-001" });
+  });
+
+  it("accepts optional autoApproveThreshold", () => {
+    const withThreshold = { ...validIntent, autoApproveThreshold: 50 };
+    expect(PaymentIntentSchema.parse(withThreshold)).toMatchObject({ autoApproveThreshold: 50 });
+  });
+
+  it("rejects invalid status", () => {
+    expect(() => PaymentIntentSchema.parse({ ...validIntent, status: "cancelled" })).toThrow();
+  });
+});
+
+describe("PaymentMandateSchema", () => {
+  const validMandate = {
+    id: "mandate-001",
+    intentId: "intent-001",
+    amount: 100,
+    currency: "USD",
+    status: "pending" as const,
+    createdAt: "2026-01-01T00:00:00.000Z",
+  };
+
+  it("accepts a valid mandate", () => {
+    expect(PaymentMandateSchema.parse(validMandate)).toMatchObject({ id: "mandate-001" });
+  });
+
+  it("accepts optional approvedBy and executedAt", () => {
+    const executed = {
+      ...validMandate,
+      status: "executed" as const,
+      approvedBy: "admin",
+      executedAt: "2026-01-01T01:00:00.000Z",
+    };
+    expect(PaymentMandateSchema.parse(executed)).toMatchObject({ approvedBy: "admin" });
+  });
+
+  it("rejects invalid status", () => {
+    expect(() => PaymentMandateSchema.parse({ ...validMandate, status: "approved" })).toThrow();
+  });
+});
+
+describe("PaymentReceiptSchema", () => {
+  const validReceipt = {
+    id: "receipt-001",
+    mandateId: "mandate-001",
+    amount: 100,
+    currency: "USD",
+    status: "confirmed" as const,
+    transactionRef: "txn-001",
+    createdAt: "2026-01-01T00:00:00.000Z",
+  };
+
+  it("accepts a valid receipt", () => {
+    expect(PaymentReceiptSchema.parse(validReceipt)).toMatchObject({ id: "receipt-001" });
+  });
+
+  it("rejects non-confirmed status", () => {
+    expect(() => PaymentReceiptSchema.parse({ ...validReceipt, status: "pending" })).toThrow();
   });
 });
 
