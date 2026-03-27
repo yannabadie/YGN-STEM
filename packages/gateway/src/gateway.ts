@@ -8,6 +8,7 @@ import { createHealthRouter } from "./routes/health.js";
 import { createA2ARouter } from "./routes/a2a.js";
 import { createMcpRouter } from "./routes/mcp.js";
 import { StemPipeline, type PipelineRequest } from "./pipeline.js";
+import { createAuthMiddleware, type AuthOptions } from "./middleware/auth.js";
 
 export interface GatewayOptions {
   registry: OrganRegistry;
@@ -16,6 +17,8 @@ export interface GatewayOptions {
   profiler?: CallerProfiler;
   selector?: ArchitectureSelector;
   skills?: SkillsEngine;
+  /** Optional: authentication configuration (JWT + API Key) */
+  auth?: AuthOptions;
 }
 
 export function createGateway(options: GatewayOptions): express.Express {
@@ -27,6 +30,11 @@ export function createGateway(options: GatewayOptions): express.Express {
 
   // Correlation ID on every request
   app.use(requestId);
+
+  // Auth middleware (after requestId, before routes)
+  if (options.auth) {
+    app.use(createAuthMiddleware(options.auth));
+  }
 
   // Route handlers
   app.use(createHealthRouter(registry));
