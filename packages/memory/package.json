@@ -1,0 +1,21 @@
+{
+  "name": "@ygn-stem/memory",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate"
+  },
+  "dependencies": {
+    "@ygn-stem/shared": "workspace:*",
+    "drizzle-orm": "latest",
+    "postgres": "^3.4.0",
+    "ioredis": "^5.4.0"
+  },
+  "devDependencies": {
+    "drizzle-kit": "latest"
+  }
+}
