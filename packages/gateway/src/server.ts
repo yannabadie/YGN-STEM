@@ -91,6 +91,10 @@ async function main() {
     selector,
     skills,
     auth,
+    rateLimiter: {
+      windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS ?? "60000"),
+      maxRequests: parseInt(process.env.RATE_LIMIT_MAX ?? "100"),
+    },
   });
 
   app.listen(port, () => {

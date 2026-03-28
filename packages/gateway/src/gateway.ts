@@ -10,6 +10,7 @@ import { createMcpRouter } from "./routes/mcp.js";
 import { agUiRouter } from "./routes/ag-ui.js";
 import { StemPipeline, type PipelineRequest } from "./pipeline.js";
 import { createAuthMiddleware, type AuthOptions } from "./middleware/auth.js";
+import { createRateLimiter, type RateLimiterOptions } from "./middleware/rate-limiter.js";
 
 export interface GatewayOptions {
   registry: OrganRegistry;
@@ -20,6 +21,8 @@ export interface GatewayOptions {
   skills?: SkillsEngine;
   /** Optional: authentication configuration (JWT + API Key) */
   auth?: AuthOptions;
+  /** Optional: token-bucket rate limiter per caller */
+  rateLimiter?: RateLimiterOptions;
 }
 
 export function createGateway(options: GatewayOptions): express.Express {
@@ -35,6 +38,11 @@ export function createGateway(options: GatewayOptions): express.Express {
   // Auth middleware (after requestId, before routes)
   if (options.auth) {
     app.use(createAuthMiddleware(options.auth));
+  }
+
+  // Rate limiter (after auth so callerId is available for per-caller buckets)
+  if (options.rateLimiter !== undefined) {
+    app.use(createRateLimiter(options.rateLimiter));
   }
 
   // Route handlers

@@ -6,3 +6,4 @@ export { createHealthRouter } from "./routes/health.js";
 export { createA2ARouter } from "./routes/a2a.js";
 export { createMcpRouter } from "./routes/mcp.js";
 export { agUiRouter } from "./routes/ag-ui.js";
+export { createRateLimiter, type RateLimiterOptions } from "./middleware/rate-limiter.js";
