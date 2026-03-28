@@ -7,6 +7,7 @@ import { errorHandler } from "./middleware/error-handler.js";
 import { createHealthRouter } from "./routes/health.js";
 import { createA2ARouter } from "./routes/a2a.js";
 import { createMcpRouter } from "./routes/mcp.js";
+import { agUiRouter } from "./routes/ag-ui.js";
 import { StemPipeline, type PipelineRequest } from "./pipeline.js";
 import { createAuthMiddleware, type AuthOptions } from "./middleware/auth.js";
 
@@ -40,6 +41,7 @@ export function createGateway(options: GatewayOptions): express.Express {
   app.use(createHealthRouter(registry));
   app.use(createA2ARouter(registry));
   app.use(createMcpRouter(registry));
+  app.use(agUiRouter(registry));
 
   // Pipeline route — only available when all pipeline dependencies are provided
   if (options.memory && options.profiler && options.selector && options.skills) {
