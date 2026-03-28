@@ -3,6 +3,13 @@ import type { IFactsStore, StoredFact } from "./networks/facts-store.js";
 import type { IEpisodesStore } from "./networks/episodes-store.js";
 import type { ISummariesStore } from "./networks/summaries-store.js";
 import type { IBeliefsStore } from "./networks/beliefs-store.js";
+import type { EmbeddingProvider } from "./embeddings/types.js";
+import { cosineSimilarity } from "./embeddings/similarity.js";
+import { ucbScore, type UCBEntry } from "./retrieval/ucb.js";
+import {
+  reciprocalRankFusion,
+  type RankedItem,
+} from "./retrieval/rrf.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -54,12 +61,22 @@ export class HindsightMemory {
   private readonly episodes: IEpisodesStore;
   private readonly summaries: ISummariesStore;
   private readonly beliefs: IBeliefsStore;
+  private readonly embeddingProvider: EmbeddingProvider | undefined;
 
-  constructor(stores: HindsightStores) {
+  /** Track hit counts and reward sums for UCB scoring, keyed by item id. */
+  private readonly ucbStats = new Map<
+    string,
+    { hitCount: number; rewardSum: number }
+  >();
+  /** Total number of recall queries processed (for UCB exploration term). */
+  private totalQueries = 0;
+
+  constructor(stores: HindsightStores, embeddingProvider?: EmbeddingProvider) {
     this.facts = stores.facts;
     this.episodes = stores.episodes;
     this.summaries = stores.summaries;
     this.beliefs = stores.beliefs;
+    this.embeddingProvider = embeddingProvider;
   }
 
   // -------------------------------------------------------------------------
@@ -87,6 +104,27 @@ export class HindsightMemory {
   // -------------------------------------------------------------------------
 
   async recall(query: RecallQuery): Promise<RecallResult> {
+    if (this.embeddingProvider) {
+      return this.vectorRecall(query);
+    }
+    return this.keywordRecall(query);
+  }
+
+  // -------------------------------------------------------------------------
+  // REFLECT — prune low-importance episodes and report statistics
+  // -------------------------------------------------------------------------
+
+  async reflect(options: ReflectOptions = {}): Promise<ReflectStats> {
+    const importanceThreshold = options.importanceThreshold ?? 0.3;
+    const episodesPruned = await this.episodes.pruneBelow(importanceThreshold);
+    return { episodesPruned, importanceThreshold };
+  }
+
+  // -------------------------------------------------------------------------
+  // Private — keyword recall (original behavior)
+  // -------------------------------------------------------------------------
+
+  private async keywordRecall(query: RecallQuery): Promise<RecallResult> {
     const networks = query.networks ?? ["facts", "episodes", "summaries", "beliefs"];
     const limit = query.limit ?? 20;
 
@@ -133,12 +171,145 @@ export class HindsightMemory {
   }
 
   // -------------------------------------------------------------------------
-  // REFLECT — prune low-importance episodes and report statistics
+  // Private — vector recall (embedding + UCB + RRF)
   // -------------------------------------------------------------------------
 
-  async reflect(options: ReflectOptions = {}): Promise<ReflectStats> {
-    const importanceThreshold = options.importanceThreshold ?? 0.3;
-    const episodesPruned = await this.episodes.pruneBelow(importanceThreshold);
-    return { episodesPruned, importanceThreshold };
+  private async vectorRecall(query: RecallQuery): Promise<RecallResult> {
+    const networks = query.networks ?? ["facts", "episodes", "summaries", "beliefs"];
+    const limit = query.limit ?? 20;
+
+    this.totalQueries++;
+
+    // Embed the query text
+    const queryEmbedding = await this.embeddingProvider!.embedSingle(query.query);
+
+    const rankedLists: RankedItem[][] = [];
+
+    // --- Episode vector search ---
+    if (networks.includes("episodes")) {
+      // Gather candidate episodes via existing search methods (broad pre-filter)
+      const byCaller = await this.episodes.searchByCaller(query.callerId, limit * 5);
+      const byKeyword = await this.episodes.searchByKeyword(query.query, limit * 5);
+
+      const seen = new Set<string>();
+      const candidates: Episode[] = [];
+      for (const ep of [...byCaller, ...byKeyword]) {
+        if (!seen.has(ep.id)) {
+          seen.add(ep.id);
+          candidates.push(ep);
+        }
+      }
+
+      // Compute similarity and apply UCB scoring
+      const scored: { episode: Episode; score: number }[] = [];
+      for (const ep of candidates) {
+        const sim = ep.embedding
+          ? cosineSimilarity(queryEmbedding, ep.embedding)
+          : 0;
+        const stats = this.ucbStats.get(ep.id) ?? { hitCount: 0, rewardSum: 0 };
+        const ucbEntry: UCBEntry = {
+          id: ep.id,
+          similarity: sim,
+          hitCount: stats.hitCount,
+          rewardSum: stats.rewardSum,
+          totalQueries: this.totalQueries,
+        };
+        scored.push({ episode: ep, score: ucbScore(ucbEntry) });
+      }
+
+      // Sort by UCB score descending
+      scored.sort((a, b) => b.score - a.score);
+
+      // Build ranked list for RRF
+      const episodeRanked: RankedItem[] = scored.map((s, i) => ({
+        id: s.episode.id,
+        source: "episodes",
+        rank: i + 1,
+        originalScore: s.score,
+        item: s.episode,
+      }));
+      rankedLists.push(episodeRanked);
+
+      // Track hits for returned episodes
+      for (const s of scored.slice(0, limit)) {
+        const stats = this.ucbStats.get(s.episode.id) ?? {
+          hitCount: 0,
+          rewardSum: 0,
+        };
+        this.ucbStats.set(s.episode.id, {
+          hitCount: stats.hitCount + 1,
+          rewardSum: stats.rewardSum,
+        });
+      }
+    }
+
+    // --- Facts vector search ---
+    if (networks.includes("facts")) {
+      // Use existing search as pre-filter for facts
+      const bySubject = await this.facts.search({ subject: query.query });
+      const byObject = await this.facts.search({ object: query.query });
+
+      // Also do a broader keyword-based search by searching for each word
+      const words = query.query.split(/\s+/).filter((w) => w.length > 1);
+      const additionalFacts: StoredFact[] = [];
+      for (const word of words) {
+        const bySub = await this.facts.search({ subject: word });
+        const byObj = await this.facts.search({ object: word });
+        additionalFacts.push(...bySub, ...byObj);
+      }
+
+      const seen = new Set<string>();
+      const candidates: StoredFact[] = [];
+      for (const fact of [...bySubject, ...byObject, ...additionalFacts]) {
+        const key = `${fact.subject}|${fact.predicate}|${fact.object}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          candidates.push(fact);
+        }
+      }
+
+      // For facts, use confidence as a proxy for similarity scoring
+      // (facts don't store embeddings in the current schema)
+      const factRanked: RankedItem[] = candidates
+        .sort((a, b) => (b.confidence ?? 0.5) - (a.confidence ?? 0.5))
+        .map((f, i) => ({
+          id: f.id,
+          source: "facts",
+          rank: i + 1,
+          originalScore: f.confidence ?? 0.5,
+          item: f,
+        }));
+      rankedLists.push(factRanked);
+    }
+
+    // --- Fuse results with RRF ---
+    const fused = reciprocalRankFusion(rankedLists);
+
+    // Separate back into episodes and facts
+    const episodeResults: Episode[] = [];
+    const factResults: FactTriple[] = [];
+
+    for (const entry of fused) {
+      if (episodeResults.length + factResults.length >= limit) break;
+      const sources = entry.sources;
+      if (sources.includes("episodes")) {
+        episodeResults.push(entry.item as Episode);
+      } else if (sources.includes("facts")) {
+        const storedFact = entry.item as StoredFact;
+        factResults.push({
+          subject: storedFact.subject,
+          predicate: storedFact.predicate,
+          object: storedFact.object,
+          confidence: storedFact.confidence,
+          sourceId: storedFact.sourceId,
+        });
+      }
+    }
+
+    return {
+      episodes: episodeResults,
+      facts: factResults,
+      totalFound: episodeResults.length + factResults.length,
+    };
   }
 }
