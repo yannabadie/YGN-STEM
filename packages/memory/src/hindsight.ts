@@ -10,6 +10,7 @@ import {
   reciprocalRankFusion,
   type RankedItem,
 } from "./retrieval/rrf.js";
+import type { MemoryCache } from "./redis/redis-cache.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -62,6 +63,7 @@ export class HindsightMemory {
   private readonly summaries: ISummariesStore;
   private readonly beliefs: IBeliefsStore;
   private readonly embeddingProvider: EmbeddingProvider | undefined;
+  private readonly cache: MemoryCache | undefined;
 
   /** Track hit counts and reward sums for UCB scoring, keyed by item id. */
   private readonly ucbStats = new Map<
@@ -71,12 +73,17 @@ export class HindsightMemory {
   /** Total number of recall queries processed (for UCB exploration term). */
   private totalQueries = 0;
 
-  constructor(stores: HindsightStores, embeddingProvider?: EmbeddingProvider) {
+  constructor(
+    stores: HindsightStores,
+    embeddingProvider?: EmbeddingProvider,
+    cache?: MemoryCache,
+  ) {
     this.facts = stores.facts;
     this.episodes = stores.episodes;
     this.summaries = stores.summaries;
     this.beliefs = stores.beliefs;
     this.embeddingProvider = embeddingProvider;
+    this.cache = cache;
   }
 
   // -------------------------------------------------------------------------
@@ -104,6 +111,23 @@ export class HindsightMemory {
   // -------------------------------------------------------------------------
 
   async recall(query: RecallQuery): Promise<RecallResult> {
+    // Check cache first
+    if (this.cache !== undefined) {
+      const { MemoryCache } = await import("./redis/redis-cache.js");
+      const cacheKey = MemoryCache.recallKey(query.callerId, query.query);
+      const cached = await this.cache.get<RecallResult>(cacheKey);
+      if (cached !== null) {
+        return cached;
+      }
+
+      const result = this.embeddingProvider
+        ? await this.vectorRecall(query)
+        : await this.keywordRecall(query);
+
+      await this.cache.set(cacheKey, result, 300);
+      return result;
+    }
+
     if (this.embeddingProvider) {
       return this.vectorRecall(query);
     }

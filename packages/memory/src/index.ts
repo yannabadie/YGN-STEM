@@ -48,3 +48,6 @@ export {
   reciprocalRankFusion,
   type RankedItem,
 } from "./retrieval/rrf.js";
+
+// Cache
+export { MemoryCache } from "./redis/redis-cache.js";
