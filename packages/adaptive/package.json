@@ -2,7 +2,16 @@
   "name": "@ygn-stem/adaptive",
   "version": "0.1.0",
   "type": "module",
-  "exports": { ".": "./src/index.ts" },
-  "scripts": { "typecheck": "tsc --noEmit", "test": "vitest run" },
-  "dependencies": { "@ygn-stem/shared": "workspace:*", "@ygn-stem/memory": "workspace:*" }
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@ygn-stem/memory": "workspace:*",
+    "@ygn-stem/shared": "workspace:*",
+    "gray-matter": "^4.0.3"
+  }
 }

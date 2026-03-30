@@ -47,6 +47,9 @@ importers:
       '@ygn-stem/adaptive':
         specifier: workspace:*
         version: link:../adaptive
+      '@ygn-stem/commerce':
+        specifier: workspace:*
+        version: link:../commerce
       '@ygn-stem/connectors':
         specifier: workspace:*
         version: link:../connectors
