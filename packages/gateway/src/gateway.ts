@@ -9,11 +9,13 @@ import { createHealthRouter } from "./routes/health.js";
 import { createA2ARouter } from "./routes/a2a.js";
 import { createMcpRouter } from "./routes/mcp.js";
 import { agUiRouter } from "./routes/ag-ui.js";
+import { a2uiRouter } from "./routes/a2ui.js";
 import { createUcpRouter } from "./routes/ucp.js";
 import { createAp2Router } from "./routes/ap2.js";
 import { StemPipeline, type PipelineRequest } from "./pipeline.js";
 import { createAuthMiddleware, type AuthOptions } from "./middleware/auth.js";
 import { createRateLimiter, type RateLimiterOptions } from "./middleware/rate-limiter.js";
+import type { FrameworkAdapter } from "./adapters/base-adapter.js";
 
 export interface GatewayOptions {
   registry: OrganRegistry;
@@ -30,6 +32,8 @@ export interface GatewayOptions {
   ucpStore?: UcpSessionStore;
   /** Optional: AP2 payment store — mounts /ap2 routes when provided */
   ap2Store?: Ap2Store;
+  /** Optional: framework adapters — mounted when pipeline dependencies are provided */
+  adapters?: FrameworkAdapter[];
 }
 
 export function createGateway(options: GatewayOptions): express.Express {
@@ -57,6 +61,7 @@ export function createGateway(options: GatewayOptions): express.Express {
   app.use(createA2ARouter(registry));
   app.use(createMcpRouter(registry));
   app.use(agUiRouter(registry));
+  app.use(a2uiRouter());
 
   // Commerce routes — mounted conditionally when stores are provided
   if (options.ucpStore !== undefined) {
@@ -90,6 +95,13 @@ export function createGateway(options: GatewayOptions): express.Express {
         next(err);
       }
     });
+
+    // Framework adapters — mounted at their declared prefix
+    if (options.adapters) {
+      for (const adapter of options.adapters) {
+        app.use(adapter.prefix, adapter.createRouter(pipeline));
+      }
+    }
   }
 
   // Global error handler (must be last, 4-arg signature)
