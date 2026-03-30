@@ -1,4 +1,5 @@
 import { createGateway } from "./gateway.js";
+import { AutoGenAdapter, CrewAIAdapter, LangGraphAdapter, OpenAIAdapter } from "./adapters/index.js";
 import { OrganRegistry } from "@ygn-stem/connectors";
 import { SageConnector, YgnConnector, MetaConnector } from "@ygn-stem/connectors";
 import {
@@ -102,6 +103,12 @@ async function main() {
     },
     ucpStore,
     ap2Store,
+    adapters: [
+      new AutoGenAdapter(),
+      new CrewAIAdapter(),
+      new LangGraphAdapter(),
+      new OpenAIAdapter(),
+    ],
   });
 
   app.listen(port, () => {
