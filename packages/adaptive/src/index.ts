@@ -4,3 +4,4 @@ export { ArchitectureSelector, type SelectionHints } from "./architecture-select
 export { SkillsEngine } from "./skills-engine.js";
 export { SleepWorker, type SleepStats, type SleepOptions } from "./sleep-worker.js";
 export { SkillLoader, type LoadedSkill } from "./skill-loader.js";
+export { GeaEvolver, type EvolutionEvent } from "./gea-evolution.js";
