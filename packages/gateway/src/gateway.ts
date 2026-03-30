@@ -2,12 +2,15 @@ import express from "express";
 import type { OrganRegistry } from "@ygn-stem/connectors";
 import type { HindsightMemory } from "@ygn-stem/memory";
 import type { CallerProfiler, ArchitectureSelector, SkillsEngine } from "@ygn-stem/adaptive";
+import type { UcpSessionStore, Ap2Store } from "@ygn-stem/commerce";
 import { requestId } from "./middleware/request-id.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import { createHealthRouter } from "./routes/health.js";
 import { createA2ARouter } from "./routes/a2a.js";
 import { createMcpRouter } from "./routes/mcp.js";
 import { agUiRouter } from "./routes/ag-ui.js";
+import { createUcpRouter } from "./routes/ucp.js";
+import { createAp2Router } from "./routes/ap2.js";
 import { StemPipeline, type PipelineRequest } from "./pipeline.js";
 import { createAuthMiddleware, type AuthOptions } from "./middleware/auth.js";
 import { createRateLimiter, type RateLimiterOptions } from "./middleware/rate-limiter.js";
@@ -23,6 +26,10 @@ export interface GatewayOptions {
   auth?: AuthOptions;
   /** Optional: token-bucket rate limiter per caller */
   rateLimiter?: RateLimiterOptions;
+  /** Optional: UCP checkout session store — mounts /ucp routes when provided */
+  ucpStore?: UcpSessionStore;
+  /** Optional: AP2 payment store — mounts /ap2 routes when provided */
+  ap2Store?: Ap2Store;
 }
 
 export function createGateway(options: GatewayOptions): express.Express {
@@ -50,6 +57,14 @@ export function createGateway(options: GatewayOptions): express.Express {
   app.use(createA2ARouter(registry));
   app.use(createMcpRouter(registry));
   app.use(agUiRouter(registry));
+
+  // Commerce routes — mounted conditionally when stores are provided
+  if (options.ucpStore !== undefined) {
+    app.use(createUcpRouter(options.ucpStore));
+  }
+  if (options.ap2Store !== undefined) {
+    app.use(createAp2Router(options.ap2Store));
+  }
 
   // Pipeline route — only available when all pipeline dependencies are provided
   if (options.memory && options.profiler && options.selector && options.skills) {

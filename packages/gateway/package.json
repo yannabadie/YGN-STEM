@@ -9,6 +9,7 @@
     "@ygn-stem/connectors": "workspace:*",
     "@ygn-stem/memory": "workspace:*",
     "@ygn-stem/adaptive": "workspace:*",
+    "@ygn-stem/commerce": "workspace:*",
     "express": "^5.0.0"
   },
   "devDependencies": {

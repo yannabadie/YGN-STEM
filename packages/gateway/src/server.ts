@@ -14,6 +14,7 @@ import {
   createDb,
 } from "@ygn-stem/memory";
 import { CallerProfiler, ArchitectureSelector, SkillsEngine } from "@ygn-stem/adaptive";
+import { UcpSessionStore, Ap2Store } from "@ygn-stem/commerce";
 
 async function main() {
   const port = parseInt(process.env.PORT ?? "3000", 10);
@@ -83,6 +84,10 @@ async function main() {
     publicPaths: ["/health", "/.well-known/agent.json"],
   };
 
+  // Initialize commerce stores
+  const ucpStore = new UcpSessionStore();
+  const ap2Store = new Ap2Store();
+
   // Create and start gateway
   const app = createGateway({
     registry,
@@ -95,6 +100,8 @@ async function main() {
       windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS ?? "60000"),
       maxRequests: parseInt(process.env.RATE_LIMIT_MAX ?? "100"),
     },
+    ucpStore,
+    ap2Store,
   });
 
   app.listen(port, () => {
