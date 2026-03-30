@@ -1,5 +1,6 @@
 import type { CallerProfile, ProfileDimension } from "@ygn-stem/shared";
 import type { IBeliefsStore } from "@ygn-stem/memory";
+import { AceReflector, type DriftReport } from "./ace-reflect.js";
 
 // ---------------------------------------------------------------------------
 // ACE Context Engineering — 21 dimensions across 4 categories
@@ -67,10 +68,15 @@ export interface InteractionContext {
 // CallerProfiler
 // ---------------------------------------------------------------------------
 
+/** Sliding window size for per-caller signal history. */
+const SIGNAL_HISTORY_WINDOW = 20;
+
 export class CallerProfiler {
   private readonly store: IBeliefsStore;
   /** In-process cache of the richer numeric profiles. */
   private readonly cache = new Map<string, NumericProfile>();
+  /** Sliding window of recent signals per caller (used by AceReflector). */
+  private readonly signalHistory = new Map<string, Record<string, number>[]>();
 
   constructor(store: IBeliefsStore) {
     this.store = store;
@@ -228,6 +234,14 @@ export class CallerProfiler {
   ): Promise<NumericProfile> {
     const np = await this.getOrCreateProfile(callerId);
 
+    // Append to signal history (sliding window)
+    const history = this.signalHistory.get(callerId) ?? [];
+    history.push(signals);
+    if (history.length > SIGNAL_HISTORY_WINDOW) {
+      history.splice(0, history.length - SIGNAL_HISTORY_WINDOW);
+    }
+    this.signalHistory.set(callerId, history);
+
     for (const [key, signal] of Object.entries(signals)) {
       const existing = np.dimensions.get(key);
       if (existing === undefined) continue;
@@ -254,5 +268,34 @@ export class CallerProfiler {
 
     this.cache.set(callerId, np);
     return np;
+  }
+
+  // -------------------------------------------------------------------------
+  // PUBLIC: reflect — detect drift and recalibrate if needed
+  // -------------------------------------------------------------------------
+
+  async reflect(callerId: string): Promise<DriftReport> {
+    // 1. Load the profile
+    const np = await this.getOrCreateProfile(callerId);
+
+    // 2. Flatten profile dimensions to {key: value} map
+    const profileValues: Record<string, number> = {};
+    for (const [key, dim] of np.dimensions.entries()) {
+      profileValues[key] = dim.value;
+    }
+
+    // 3. Get recent signal history for this caller
+    const history = this.signalHistory.get(callerId) ?? [];
+
+    // 4. Run AceReflector.detect()
+    const reflector = new AceReflector();
+    const report = reflector.detect(profileValues, history);
+
+    // 5. If drift found, apply corrections via curate()
+    if (report.hasDrift && Object.keys(report.corrections).length > 0) {
+      await this.curate(callerId, report.corrections);
+    }
+
+    return report;
   }
 }
