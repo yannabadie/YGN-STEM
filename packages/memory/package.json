@@ -2,7 +2,9 @@
   "name": "@ygn-stem/memory",
   "version": "0.1.0",
   "type": "module",
-  "exports": { ".": "./src/index.ts" },
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -12,9 +14,9 @@
   "dependencies": {
     "@ygn-stem/shared": "workspace:*",
     "drizzle-orm": "latest",
-    "postgres": "^3.4.0",
     "ioredis": "^5.4.0",
-    "_ioredis_note": "ioredis is not yet imported — reserved for Redis caching layer (planned)"
+    "onnxruntime-node": "^1.24.3",
+    "postgres": "^3.4.0"
   },
   "devDependencies": {
     "drizzle-kit": "latest"

@@ -39,6 +39,7 @@ export { createDb, type Database } from "./db/connection.js";
 // Embedding service
 export { type EmbeddingProvider } from "./embeddings/types.js";
 export { HashEmbeddingProvider } from "./embeddings/hash-provider.js";
+export { OnnxEmbeddingProvider, type OnnxProviderOptions } from "./embeddings/onnx-provider.js";
 export { cosineSimilarity } from "./embeddings/similarity.js";
 
 // Retrieval algorithms
